@@ -161,18 +161,16 @@ void MyGLCanvas::drawScene() {
 
 	SceneNode* root = parser->getRootNode();
 
-	// cout << ((((root->children)[0])->primitives)[0])->type << endl;
-	// cout << (root->primitives)[0] << endl;
-	SceneNode* cur_node = root;
-	while ((!cur_node->children).empty) {
-		scene_stack.push(cur_node);
-		children_size = (cur_node->children).size();
-		for (int i = 0; i < children_size; i++) {
-			cur_node = cur_node->children[i]
-		}
-		
-	}
 	glm::mat4 compositeMatrix(1.0f);
+
+	vector<FlatSceneNode *> flat_tree;
+	generate_flat_tree(root, compositeMatrix, flat_tree);
+
+	cout << "----------------------------" << endl;
+	for (int i = 0; i < flat_tree.size(); i++) {
+		cout << (flat_tree[i]->primitive)->type << endl;
+	}
+
 
 	glColor3f(1.0, 0.0, 0.0);
 	if (wireframe) {
@@ -198,6 +196,22 @@ void MyGLCanvas::drawScene() {
 		//TODO: render the scene
 		// note that you should always applyMaterial first before drawing each geometry
 	}
+
+	// if (wireframe) {
+	// 	glDisable(GL_LIGHTING);
+	// 	glEnable(GL_POLYGON_OFFSET_FILL);
+	// 	glColor3f(1.0f, 1.0f, 0.0f);
+	// 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// 	shape->draw();
+	// 	glEnable(GL_LIGHTING);
+	// }
+
+	// if (fill) {
+	// 	glEnable(GL_POLYGON_OFFSET_FILL);
+	// 	glColor3f(0.5, 0.5, 0.5);
+	// 	glPolygonMode(GL_FRONT, GL_FILL);
+	// 	shape->draw();
+	// }
 	glDisable(GL_LIGHTING);
 
 	glPopMatrix();
@@ -311,28 +325,36 @@ void MyGLCanvas::setLight(const SceneLightData &light) {
 }
 
 // generates a flat tree in postorder traversal
-void generate_flat_tree(SceneNode* node, glm::mat4 transformationMat, vector<SceneNode> flat_tree)
+void MyGLCanvas::generate_flat_tree(SceneNode* node, glm::mat4 transformationMat, vector<FlatSceneNode *> &flat_tree)
 { 
     if (node == NULL) 
         return;
 	
-	vector<SceneTransformation> transformations = node->transformations;
+	vector<SceneTransformation *> transformations = node->transformations;
 	glm::mat4 new_tranformationMat;
 	for (int i = 0; i < transformations.size(); i++) {
-		SceneTransformation t = transformations[i];
-		if (t.type == TRANSFORMATION_TRANSLATE) {
+		SceneTransformation *t = transformations[i];
+		if (t->type == TRANSFORMATION_TRANSLATE) {
 			new_tranformationMat = glm::mat4(1.0);
-			new_tranformationMat[3] = glm::vec4(t.translate);
+			glm::vec4 translateVec4 = glm::vec4(1.0);
+			translateVec4[0] = t->translate[0];
+			translateVec4[1] = t->translate[1];
+			translateVec4[2] = t->translate[2];
+			new_tranformationMat *= translateVec4;
 		}
-		else if (t.type == TRANSFORMATION_SCALE) {
+		else if (t->type == TRANSFORMATION_SCALE) {
 			new_tranformationMat = glm::mat4(1.0);
-			new_tranformationMat *= glm::vec4(scale);
+			glm::vec4 scaleVec4 = glm::vec4(1.0);
+			scaleVec4[0] = t->scale[0];
+			scaleVec4[1] = t->scale[1];
+			scaleVec4[2] = t->scale[2];
+			new_tranformationMat *= scaleVec4;
 		}
-		else if (t.type == TRANSFORMATION_ROTATE) {
+		else if (t->type == TRANSFORMATION_ROTATE) {
 			new_tranformationMat = glm::mat4(1.0);
 		}
-		else if (t.type == TRANSFORMATION_MATRIX) {
-			new_tranformationMat = t.matrix;
+		else if (t->type == TRANSFORMATION_MATRIX) {
+			new_tranformationMat = t->matrix;
 		}
 	}
 
@@ -342,11 +364,11 @@ void generate_flat_tree(SceneNode* node, glm::mat4 transformationMat, vector<Sce
 		generate_flat_tree((node->children)[i], new_tranformationMat, flat_tree);
 	}
 
-	vector<ScenePrimitive*> primitives;
+	vector<ScenePrimitive*> primitives = node->primitives;
 	for (int i = 0; i < primitives.size(); i++) {
-		FlatSceneNode* fnode = new FlatSceneNode();
-		fnode.transformationMat = new_tranformationMat;
-		fnode.primitive = primitives[i];
-		flat_tree.push(fnode);
+		FlatSceneNode *fnode = new FlatSceneNode();
+		fnode->transformationMat = new_tranformationMat;
+		fnode->primitive = primitives[i];
+		flat_tree.push_back(fnode);
 	}
 }

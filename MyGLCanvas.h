@@ -22,11 +22,6 @@
 #include "Camera.h"
 #include "scene/SceneParser.h"
 
-enum TransformationType {
-   TRANSFORMATION_TRANSLATE, TRANSFORMATION_SCALE, 
-   TRANSFORMATION_ROTATE, TRANSFORMATION_MATRIX
-};
-
 //! Structure for non-primitive scene objects
 class FlatSceneNode
 {
@@ -76,6 +71,7 @@ private:
 	void updateCamera(int width, int height);
 	void setLight(const SceneLightData &light);
 	void applyMaterial(const SceneMaterial &material);
+	void generate_flat_tree(SceneNode* node, glm::mat4 transformationMat, vector<FlatSceneNode *> &flat_tree);
 };
 
 #endif // !MYGLCANVAS_H
