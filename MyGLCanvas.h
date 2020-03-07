@@ -17,10 +17,26 @@
 #include "Cone.h"
 #include "Sphere.h"
 #include "Special_Shape.h"
+#include <stack>
 
 #include "Camera.h"
 #include "scene/SceneParser.h"
 
+enum TransformationType {
+   TRANSFORMATION_TRANSLATE, TRANSFORMATION_SCALE, 
+   TRANSFORMATION_ROTATE, TRANSFORMATION_MATRIX
+};
+
+//! Structure for non-primitive scene objects
+class FlatSceneNode
+{
+public:
+   /*! Transformation at this node */
+   glm::mat4 transformationMat;
+
+   /*! Primitive at this node */
+   ScenePrimitive* primitive;
+};
 
 class MyGLCanvas : public Fl_Gl_Window {
 public:

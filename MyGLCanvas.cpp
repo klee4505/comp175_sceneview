@@ -1,6 +1,7 @@
 #define NUM_OPENGL_LIGHTS 8
 
 #include "MyGLCanvas.h"
+using namespace std;
 
 int Shape::m_segmentsX;
 int Shape::m_segmentsY;
@@ -96,6 +97,8 @@ void MyGLCanvas::loadSceneFile(const char* filenamePath) {
 		else {
 			camera->orientLookAt(cameraData.pos, cameraData.lookAt, cameraData.up);
 		}
+
+		
 	}
 }
 
@@ -153,7 +156,22 @@ void MyGLCanvas::drawScene() {
 		glDisable(GL_LIGHT0 + i);
 	}
 
+	// declare stack of SceneNodes
+	stack<SceneNode *> scene_stack;
+
 	SceneNode* root = parser->getRootNode();
+
+	// cout << ((((root->children)[0])->primitives)[0])->type << endl;
+	// cout << (root->primitives)[0] << endl;
+	SceneNode* cur_node = root;
+	while ((!cur_node->children).empty) {
+		scene_stack.push(cur_node);
+		children_size = (cur_node->children).size();
+		for (int i = 0; i < children_size; i++) {
+			cur_node = cur_node->children[i]
+		}
+		
+	}
 	glm::mat4 compositeMatrix(1.0f);
 
 	glColor3f(1.0, 0.0, 0.0);
@@ -289,5 +307,46 @@ void MyGLCanvas::setLight(const SceneLightData &light) {
 		glEnable(id);
 		break;
 	}
+	}
+}
+
+// generates a flat tree in postorder traversal
+void generate_flat_tree(SceneNode* node, glm::mat4 transformationMat, vector<SceneNode> flat_tree)
+{ 
+    if (node == NULL) 
+        return;
+	
+	vector<SceneTransformation> transformations = node->transformations;
+	glm::mat4 new_tranformationMat;
+	for (int i = 0; i < transformations.size(); i++) {
+		SceneTransformation t = transformations[i];
+		if (t.type == TRANSFORMATION_TRANSLATE) {
+			new_tranformationMat = glm::mat4(1.0);
+			new_tranformationMat[3] = glm::vec4(t.translate);
+		}
+		else if (t.type == TRANSFORMATION_SCALE) {
+			new_tranformationMat = glm::mat4(1.0);
+			new_tranformationMat *= glm::vec4(scale);
+		}
+		else if (t.type == TRANSFORMATION_ROTATE) {
+			new_tranformationMat = glm::mat4(1.0);
+		}
+		else if (t.type == TRANSFORMATION_MATRIX) {
+			new_tranformationMat = t.matrix;
+		}
+	}
+
+	new_tranformationMat = transformationMat * new_tranformationMat;
+	int children_size = (node->children).size();
+	for (int i = 0; i < children_size; i++) {
+		generate_flat_tree((node->children)[i], new_tranformationMat, flat_tree);
+	}
+
+	vector<ScenePrimitive*> primitives;
+	for (int i = 0; i < primitives.size(); i++) {
+		FlatSceneNode* fnode = new FlatSceneNode();
+		fnode.transformationMat = new_tranformationMat;
+		fnode.primitive = primitives[i];
+		flat_tree.push(fnode);
 	}
 }
