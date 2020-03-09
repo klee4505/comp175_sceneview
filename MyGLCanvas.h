@@ -55,6 +55,7 @@ public:
 	Camera* camera;
 	SceneParser* parser;
 
+
 	MyGLCanvas(int x, int y, int w, int h, const char *l = 0);
 	~MyGLCanvas();
 	void renderShape(OBJ_TYPE type);
@@ -62,6 +63,8 @@ public:
 	void loadSceneFile(const char* filenamePath);
 
 private:
+	vector<FlatSceneNode *> flat_tree;
+	
 	void draw();
 	void drawScene();
 	void drawAxis();
